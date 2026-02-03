@@ -26,4 +26,9 @@ export class AppController {
       user_agent: request.get('user-agent') ?? 'unknown',
     };
   }
+  
+  @Get('/health')
+  health() {
+    return { status: 'ok' };
+  }
 }

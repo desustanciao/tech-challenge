@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { PrometheusModule } from '@willsoto/nestjs-prometheus';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AppController } from './app.controller';
 import { VisitsModule } from './visits/visits.module';
@@ -18,6 +19,9 @@ import { VisitsModule } from './visits/visits.module';
       inject: [ConfigService],
     }),
     VisitsModule,
+    PrometheusModule.register({
+      path: '/metrics',
+    }),
   ],
   controllers: [AppController],
 })

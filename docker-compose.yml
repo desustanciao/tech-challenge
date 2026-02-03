@@ -1,0 +1,59 @@
+services:
+  mongo:
+    image: mongo:8
+    container_name: mongo
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_DB_NAME}
+    volumes:
+      - mongo_data:/data/db
+      - ./init_scripts:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: .
+    env_file:
+      - .env
+    container_name: nestjs-api
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      MONGODB_URI: ${MONGODB_URI}
+    ports:
+      - "3000:3000"
+   
+  api-test:
+    image: node:20-alpine
+    container_name: nestjs-api-test
+    working_dir: /app
+    env_file:
+      - .env
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      NODE_ENV: test
+      MONGODB_URI: ${MONGODB_URI}
+    volumes:
+      - .:/app
+    command: >
+      sh -c "
+        corepack enable &&
+        pnpm install &&
+        pnpm test
+      "
+
+volumes:
+  mongo_data:
